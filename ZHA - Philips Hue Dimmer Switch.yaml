@@ -109,7 +109,7 @@ action:
                 - service: light.turn_on
                   target: !input 'light'
                   data:
-                      brightness_step_pct: 10
+                      brightness_pct: 100
                       transition: 1
           - conditions:
                 - "{{ command == 'step' }}"
