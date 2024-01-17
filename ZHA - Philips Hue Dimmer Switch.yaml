@@ -95,7 +95,7 @@ action:
                 - "{{ command == 'on_double_press' }}"
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
-           sequence:
+            sequence:
                 - service: light.turn_on
                   target: !input 'light'
                   data:
