@@ -120,6 +120,7 @@ action:
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
                 condition:
+                    alias: 'Multiple args values'
                     or:
                         - '{{ args == [1, 30, 9] }}'
                         - '{{ args == [<StepMode.Down: 1>, 30, 9] }}'
