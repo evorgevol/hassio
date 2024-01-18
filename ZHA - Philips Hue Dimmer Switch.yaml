@@ -71,8 +71,7 @@ action:
                 - '{{ endpoint_id == 1 }}'
                 - condition:
                         alias: 'Multiple args values'
-                        condition: or
-                        conditions:
+                        or:
                             - '{{ args == [0, 0] }}'
                             - '{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}'
             sequence:
