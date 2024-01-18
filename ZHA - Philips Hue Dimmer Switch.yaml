@@ -69,8 +69,7 @@ action:
                 - '{{ command == button_off }}'
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
-                - condition: or
-                  conditions:
+                - or:
                       - '{{ args == [0, 0] }}'
                       - '{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}'
             sequence:
