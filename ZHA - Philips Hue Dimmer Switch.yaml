@@ -1,136 +1,130 @@
+---
 blueprint:
-    name: ZHA - Philips Hue Dimmer Switch v1
-    description: 'Control lights with a Philips Hue Dimmer Switch.
+  name: ZHA - Philips Hue Dimmer Switch v1
+  description: |
+    Control lights with a Philips Hue Dimmer Switch.
 
+    The top "on" button will turn the lights on to the last set brightness
+    Double click "on" to force brightness to full
 
-        The top "on" button will turn the lights on to the last set brightness
+    Dim up/down buttons will change the brightness smoothly and can be pressed
+    and hold until the brightness is satisfactory.
 
-        Double click "on" to force brightness to full
-
-
-        Dim up/down buttons will change the brightness smoothly and can be pressed
-
-        and hold until the brightness is satisfactory.
-
-
-        The bottom "off" button will turn the lights off.
-
-        '
-    domain: automation
-    input:
-        remote:
-            name: Philips Hue Dimmer Switch
-            description: RWL021
-            selector:
-                device:
-                    integration: zha
-                    manufacturer: Philips
-                    entity:
-                        domain: sensor
-                        device_class: battery
-
-        light:
-            name: Light(s)
-            description: The light(s) to control
-            selector:
-                target:
-                    entity:
-                        domain: light
-    source_url: https://github.com/evorgevol/hassio/blob/main/ZHA%20-%20Philips%20Hue%20Dimmer%20Switch.yaml
+    The bottom "off" button will turn the lights off.
+  domain: automation
+  input:
+    remote:
+      name: Philips Hue Dimmer Switch
+      description: RWL021
+      selector:
+        device:
+          integration: zha
+          manufacturer: Philips
+          entity:
+            domain: sensor
+            device_class: battery
+    light:
+      name: Light(s)
+      description: The light(s) to control
+      selector:
+        target:
+          entity:
+            domain: light
+  source_url: https://github.com/evorgevol/hassio/blob/main/ZHA%20-%20Philips%20Hue%20Dimmer%20Switch.yaml
 mode: restart
 max_exceeded: silent
 variables:
-    button_on: 'on'
-    button_off: 'off_with_effect'
-    button_step: 'step'
-    button_on_double: 'on_double_press'
+  button_on: on
+  button_off: off_with_effect
+  button_step: step
+  button_on_double: on_double_press
 trigger:
-    - platform: event
-      event_type: zha_event
-      event_data:
-          device_id: !input 'remote'
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: remote
 action:
-    - variables:
-          command: '{{ trigger.event.data.command }}'
-          cluster_id: '{{ trigger.event.data.cluster_id }}'
-          endpoint_id: '{{ trigger.event.data.endpoint_id }}'
-          args: '{{ trigger.event.data.args }}'
-    - choose:
-          - conditions:
-                - '{{ command == button_on }}'
-                - '{{ cluster_id == 6 }}'
-                - '{{ endpoint_id == 1 }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      transition: 1
-          - conditions:
-                - '{{ command == button_off }}'
-                - '{{ cluster_id == 6 }}'
-                - '{{ endpoint_id == 1 }}'
-                condition:
-                    alias: 'Multiple args values'
-                    condition: or
-                    contitions:
-                        - '{{ args == [0, 0] }}'
-                        - '{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}'
-            sequence:
-                - service: light.turn_off
-                  target: !input 'light'
-                  data:
-                      transition: 1
-          - conditions:
-                - '{{ command == button_on_double }}'
-                - '{{ cluster_id == 6 }}'
-                - '{{ endpoint_id == 1 }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      brightness_pct: 100
-                      transition: 1
-          - conditions:
-                - '{{ command == step }}'
-                - '{{ cluster_id == 8 }}'
-                - '{{ endpoint_id == 1 }}'
-                - '{{ args == [0, 30, 9] }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      brightness_step_pct: 10
-                      transition: 1
-          - conditions:
-                - '{{ command == step }}'
-                - '{{ cluster_id == 8 }}'
-                - '{{ endpoint_id == 1 }}'
-                - '{{ args == [0, 56, 9] }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      brightness_step_pct: 25
-                      transition: 1
-          - conditions:
-                - '{{ command == step }}'
-                - '{{ cluster_id == 8 }}'
-                - '{{ endpoint_id == 1 }}'
-                - '{{ args == [1, 30, 9] }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      brightness_step_pct: -10
-                      transition: 1
-          - conditions:
-                - '{{ command == step }}'
-                - '{{ cluster_id == 8 }}'
-                - '{{ endpoint_id == 1 }}'
-                - '{{ args == [1, 56, 9] }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      brightness_step_pct: -25
-                      transition: 1
+  - variables:
+      command: "{{ trigger.event.data.command }}"
+      cluster_id: "{{ trigger.event.data.cluster_id }}"
+      endpoint_id: "{{ trigger.event.data.endpoint_id }}"
+      args: "{{ trigger.event.data.args }}"
+  - choose:
+      - conditions:
+          - "{{ command == button_on }}"
+          - "{{ cluster_id == 6 }}"
+          - "{{ endpoint_id == 1 }}"
+        sequence:
+          - service: light.turn_on
+            target: light
+            data:
+              transition: 1
+      - conditions:
+          - "{{ command == button_off }}"
+          - "{{ cluster_id == 6 }}"
+          - "{{ endpoint_id == 1 }}"
+          - condition:
+              alias: Multiple args values
+              condition: or
+              contitions:
+                - "{{ args == [0, 0] }}"
+                - "{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}"
+        sequence:
+          - service: light.turn_off
+            target: light
+            data:
+              transition: 1
+      - conditions:
+          - "{{ command == button_on_double }}"
+          - "{{ cluster_id == 6 }}"
+          - "{{ endpoint_id == 1 }}"
+        sequence:
+          - service: light.turn_on
+            target: light
+            data:
+              brightness_pct: 100
+              transition: 1
+      - conditions:
+          - "{{ command == step }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ args == [0, 30, 9] }}"
+        sequence:
+          - service: light.turn_on
+            target: light
+            data:
+              brightness_step_pct: 10
+              transition: 1
+      - conditions:
+          - "{{ command == step }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ args == [0, 56, 9] }}"
+        sequence:
+          - service: light.turn_on
+            target: light
+            data:
+              brightness_step_pct: 25
+              transition: 1
+      - conditions:
+          - "{{ command == step }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ args == [1, 30, 9] }}"
+        sequence:
+          - service: light.turn_on
+            target: light
+            data:
+              brightness_step_pct: -10
+              transition: 1
+      - conditions:
+          - "{{ command == step }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ args == [1, 56, 9] }}"
+        sequence:
+          - service: light.turn_on
+            target: light
+            data:
+              brightness_step_pct: -25
+              transition: 1
