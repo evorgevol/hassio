@@ -119,11 +119,7 @@ action:
                 - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
-                condition:
-                    alias: 'Multiple args values'
-                    or:
-                        - '{{ args == [1, 30, 9] }}'
-                        - '{{ args == [<StepMode.Down: 1>, 30, 9] }}'
+                - '{{ args == [1, 30, 9] }}'
             sequence:
                 - service: light.turn_on
                   target: !input 'light'
