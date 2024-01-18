@@ -88,11 +88,6 @@ action:
                 - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
-                condition:
-                    alias: 'Mutliple args values'
-                    or:
-                        - '{{ args == [0, 30, 9] }}'
-                        - '{{ args == [0, 30, 9] }}'
             sequence:
                 - service: light.turn_on
                   target: !input 'light'
