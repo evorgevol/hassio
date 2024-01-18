@@ -69,6 +69,12 @@ action:
                 - '{{ command == button_off }}'
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
+                condition:
+                    alias: 'Multiple args values'
+                    condition: or
+                    contitions:
+                        - '{{ args == [0, 0] }}'
+                        - '{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}'
             sequence:
                 - service: light.turn_off
                   target: !input 'light'
@@ -83,6 +89,17 @@ action:
                   target: !input 'light'
                   data:
                       brightness_pct: 100
+                      transition: 1
+          - conditions:
+                - '{{ command == step }}'
+                - '{{ cluster_id == 8 }}'
+                - '{{ endpoint_id == 1 }}'
+                - '{{ args == [0, 30, 9] }}'
+            sequence:
+                - service: light.turn_on
+                  target: !input 'light'
+                  data:
+                      brightness_step_pct: 10
                       transition: 1
           - conditions:
                 - '{{ command == step }}'
