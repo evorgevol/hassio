@@ -40,7 +40,7 @@ blueprint:
 mode: restart
 max_exceeded: silent
 variables:
-    button_on: 'on'
+    button_on: on
     button_off: 'off_with_effect'
     button_step: 'step'
     button_on_double: 'on_double_press'
