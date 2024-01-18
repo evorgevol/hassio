@@ -69,11 +69,6 @@ action:
                 - '{{ command == button_off }}'
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
-                condition:
-                    alias: 'Multiple args values'
-                    or:
-                        - '{{ args == [0, 0] }}'
-                        - '{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}'
             sequence:
                 - service: light.turn_off
                   target: !input 'light'
