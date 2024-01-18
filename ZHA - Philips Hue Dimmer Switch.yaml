@@ -1,11 +1,11 @@
 blueprint:
-    name: ZHA - Philips Hue Dimmer Switch
+    name: ZHA - Philips Hue Dimmer Switch v1
     description: 'Control lights with a Philips Hue Dimmer Switch.
 
 
         The top "on" button will turn the lights on to the last set brightness
 
-        (unless the force brightness is toggled on in the blueprint).
+        Double click "on" to force brightness to full
 
 
         Dim up/down buttons will change the brightness smoothly and can be pressed
@@ -20,7 +20,7 @@ blueprint:
     input:
         remote:
             name: Philips Hue Dimmer Switch
-            description: Pick either RWL020 (US) or RWL021 (EU)
+            description: RWL021
             selector:
                 device:
                     integration: zha
@@ -36,31 +36,14 @@ blueprint:
                 target:
                     entity:
                         domain: light
-        force_brightness:
-            name: Force turn on brightness
-            description: 'Force the brightness to the set level below, when the "on" button
-                on the remote is pushed and lights turn on.
-
-                '
-            default: false
-            selector:
-                boolean: {}
-        brightness:
-            name: Brightness
-            description: Brightness of the light(s) when turning on
-            default: 100
-            selector:
-                number:
-                    min: 0.0
-                    max: 100.0
-                    mode: slider
-                    step: 1.0
-                    unit_of_measurement: '%'
-    source_url: https://community.home-assistant.io/t/zha-philips-hue-dimmer-switch/255048
+    source_url: https://github.com/evorgevol/hassio/blob/main/ZHA%20-%20Philips%20Hue%20Dimmer%20Switch.yaml
 mode: restart
 max_exceeded: silent
 variables:
-    force_brightness: !input 'force_brightness'
+    button_on: 'on'
+    button_off: 'off_with_effect'
+    button_step: 'step'
+    button_on_double: 'on_double_press'
 trigger:
     - platform: event
       event_type: zha_event
@@ -74,25 +57,16 @@ action:
           args: '{{ trigger.event.data.args }}'
     - choose:
           - conditions:
-                - "{{ command == 'on' }}"
+                - '{{ command == button_on }}'
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
             sequence:
-                - choose:
-                      - conditions: '{{ force_brightness }}'
-                        sequence:
-                            - service: light.turn_on
-                              target: !input 'light'
-                              data:
-                                  transition: 1
-                                  brightness_pct: !input 'brightness'
-                  default:
-                      - service: light.turn_on
-                        target: !input 'light'
-                        data:
-                            transition: 1
+                - service: light.turn_on
+                  target: !input 'light'
+                  data:
+                      transition: 1
           - conditions:
-                - "{{ command == 'off_with_effect' }}"
+                - '{{ command == button_off }}'
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
                 - '{{ args == [0, 0] }}'
@@ -102,7 +76,7 @@ action:
                   data:
                       transition: 1
           - conditions:
-                - "{{ command == 'on_double_press' }}"
+                - '{{ command == button_on_double }}'
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
             sequence:
@@ -112,7 +86,7 @@ action:
                       brightness_pct: 100
                       transition: 1
           - conditions:
-                - "{{ command == 'step' }}"
+                - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
                 - '{{ args == [0, 30, 9] }}'
@@ -123,7 +97,7 @@ action:
                       brightness_step_pct: 10
                       transition: 1
           - conditions:
-                - "{{ command == 'step' }}"
+                - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
                 - '{{ args == [0, 56, 9] }}'
@@ -134,7 +108,7 @@ action:
                       brightness_step_pct: 25
                       transition: 1
           - conditions:
-                - "{{ command == 'step' }}"
+                - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
                 - '{{ args == [1, 30, 9] }}'
@@ -145,7 +119,7 @@ action:
                       brightness_step_pct: -10
                       transition: 1
           - conditions:
-                - "{{ command == 'step' }}"
+                - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
                 - '{{ args == [1, 56, 9] }}'
