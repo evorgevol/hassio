@@ -70,7 +70,6 @@ action:
                 - '{{ cluster_id == 6 }}'
                 - '{{ endpoint_id == 1 }}'
                 - condition: or
-                  alias: 'Multiple args values'
                   conditions:
                       - '{{ args == [0, 0] }}'
                       - '{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}'
