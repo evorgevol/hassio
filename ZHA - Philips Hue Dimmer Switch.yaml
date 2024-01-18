@@ -66,7 +66,6 @@ action:
           - condition: or
             conditions:
               - "{{ args == [0, 0] }}"
-              - "{{ args == [<OffEffectIdentifier.Delayed_All_Off: 0>, 0] }}"
         sequence:
           - service: light.turn_off
             target: light
