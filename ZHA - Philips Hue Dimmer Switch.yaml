@@ -113,7 +113,7 @@ action:
                 - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
-                - '{{ step_mode == StepMode.Down }}'
+                - '{{ step_mode == "StepMode.Down" }}'
                 - '{{ step_size == 30 }}'
             sequence:
                 - service: light.turn_on
