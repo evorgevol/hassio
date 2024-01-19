@@ -42,8 +42,6 @@ max_exceeded: silent
 variables:
     button_on: 'on'
     button_off: 'off_with_effect'
-    button_step: 'step'
-    button_on_double: 'on_double_press'
 trigger:
     - platform: event
       event_type: zha_event
@@ -54,9 +52,6 @@ action:
           command: '{{ trigger.event.data.command }}'
           cluster_id: '{{ trigger.event.data.cluster_id }}'
           endpoint_id: '{{ trigger.event.data.endpoint_id }}'
-          params: '{{ trigger.event.data.params }}'
-          step_mode: '{{ trigger.event.data.params.step_mode }}'
-          step_size: '{{ trigger.event.data.params.step_size }}'
     - choose:
           - conditions:
                 - '{{ command == button_on }}'
@@ -81,18 +76,6 @@ action:
                 - '{{ command == ''step'' }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
-                - "{{ trigger.event.data.params.step_mode == 1 }}"
-                - '{{ trigger.event.data.params.step_size == 30 }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      brightness_step_pct: -10
-                      transition: 1
-          - conditions:
-                - '{{ command == ''step'' }}'
-                - '{{ cluster_id == 8 }}'
-                - '{{ endpoint_id == 1 }}'
                 - "{{ trigger.event.data.params.step_mode == 0 }}"
                 - '{{ trigger.event.data.params.step_size == 30 }}'
             sequence:
@@ -100,6 +83,18 @@ action:
                   target: !input 'light'
                   data:
                       brightness_step_pct: 10
+                      transition: 1
+          - conditions:
+                - '{{ command == ''step'' }}'
+                - '{{ cluster_id == 8 }}'
+                - '{{ endpoint_id == 1 }}'
+                - "{{ trigger.event.data.params.step_mode == 1 }}"
+                - '{{ trigger.event.data.params.step_size == 30 }}'
+            sequence:
+                - service: light.turn_on
+                  target: !input 'light'
+                  data:
+                      brightness_step_pct: -10
                       transition: 1
           - conditions:
                 - '{{ command == ''step'' }}'
