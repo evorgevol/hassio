@@ -78,14 +78,16 @@ action:
                   data:
                       transition: 1
           - conditions:
-                - '{{ command == button_on_double }}'
-                - '{{ cluster_id == 6 }}'
+                - '{{ command == ''step'' }}'
+                - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
+                # - "{{ trigger.event.data.params.step_mode == 1 }}"
+                # - '{{ trigger.event.data.params.step_size == 30 }}'
             sequence:
                 - service: light.turn_on
                   target: !input 'light'
                   data:
-                      brightness_pct: 100
+                      brightness_step_pct: -10
                       transition: 1
           - conditions:
                 - '{{ command == step }}'
@@ -108,18 +110,6 @@ action:
                   target: !input 'light'
                   data:
                       brightness_step_pct: 25
-                      transition: 1
-          - conditions:
-                - '{{ command == step }}'
-                - '{{ cluster_id == 8 }}'
-                - '{{ endpoint_id == 1 }}'
-                # - "{{ trigger.event.data.params.step_mode == 1 }}"
-                # - '{{ trigger.event.data.params.step_size == 30 }}'
-            sequence:
-                - service: light.turn_on
-                  target: !input 'light'
-                  data:
-                      brightness_step_pct: -10
                       transition: 1
           - conditions:
                 - '{{ command == step }}'
