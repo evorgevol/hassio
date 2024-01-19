@@ -54,6 +54,9 @@ action:
           command: '{{ trigger.event.data.command }}'
           cluster_id: '{{ trigger.event.data.cluster_id }}'
           endpoint_id: '{{ trigger.event.data.endpoint_id }}'
+          params: '{{ trigger.event.data.params }}'
+          step_mode: '{{ trigger.event.data.params.step_mode }}'
+          step_size: '{{ trigger.event.data.params.step_size }}'
     - choose:
           - conditions:
                 - '{{ command == button_on }}'
@@ -75,11 +78,11 @@ action:
                   data:
                       transition: 1
           - conditions:
-                - '{{ command == step }}'
+                - '{{ command == ''step'' }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
                 - "{{ trigger.event.data.params.step_mode == 1 }}"
-                - '{{ trigger.event.data.params.step_size == 30 }}'
+                # - '{{ trigger.event.data.params.step_size == 30 }}'
             sequence:
                 - service: light.turn_on
                   target: !input 'light'
@@ -90,8 +93,7 @@ action:
                 - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
-                - "{{ trigger.event.data.params.step_mode == 0 }}"
-                - '{{ trigger.event.data.params.step_size == 30 }}'
+                - '{{ trigger.event.data.args == [0, 30, 9] }}'
             sequence:
                 - service: light.turn_on
                   target: !input 'light'
@@ -102,8 +104,7 @@ action:
                 - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
-                - "{{ trigger.event.data.params.step_mode == 0 }}"
-                - '{{ trigger.event.data.params.step_size == 56 }}'
+                - '{{ trigger.event.data.args == [0, 56, 9] }}'
             sequence:
                 - service: light.turn_on
                   target: !input 'light'
@@ -114,8 +115,7 @@ action:
                 - '{{ command == step }}'
                 - '{{ cluster_id == 8 }}'
                 - '{{ endpoint_id == 1 }}'
-                - "{{ trigger.event.data.params.step_mode == 1 }}"
-                - '{{ trigger.event.data.params.step_size == 56 }}'
+                - '{{ trigger.event.data.args == [1, 56, 9] }}'
             sequence:
                 - service: light.turn_on
                   target: !input 'light'
