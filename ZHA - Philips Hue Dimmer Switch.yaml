@@ -36,7 +36,7 @@ max_exceeded: silent
 variables:
   button_on: on
   button_off: off_with_effect
-  light: !input 'light'
+  light_input: !input 'light'
 trigger:
   - platform: event
     event_type: zha_event
@@ -48,7 +48,7 @@ action:
       cluster_id: "{{ trigger.event.data.cluster_id }}"
       endpoint_id: "{{ trigger.event.data.endpoint_id }}"
       to_state: "{{ trigger.to_state }}"
-      is_turned_on: '{{ states(light) == ''on'' }}'
+      is_turned_on: '{{ states(light_input) == ''on'' }}'
   - choose:
       - conditions:
           - "{{ command == button_on }}"
