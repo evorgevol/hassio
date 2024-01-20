@@ -1,5 +1,5 @@
 blueprint:
-    name: ZHA - Philips Hue Dimmer Switch v1 -test2
+    name: ZHA - Philips Hue Dimmer Switch v1 -test3
     description: 'Control lights with a Philips Hue Dimmer Switch.
 
 
@@ -42,6 +42,7 @@ max_exceeded: silent
 variables:
     button_on: 'on'
     button_off: 'off_with_effect'
+    light_input: !input 'light'
 trigger:
     - platform: event
       event_type: zha_event
