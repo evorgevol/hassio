@@ -52,7 +52,6 @@ action:
           command: '{{ trigger.event.data.command }}'
           cluster_id: '{{ trigger.event.data.cluster_id }}'
           endpoint_id: '{{ trigger.event.data.endpoint_id }}'
-          to_state: '{{ trigger.to_state }}'
     - choose:
           - conditions:
                 - '{{ command == button_on }}'
