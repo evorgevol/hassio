@@ -1,5 +1,5 @@
 blueprint:
-    name: ZHA - Philips Hue Dimmer Switch v1 -test4
+    name: ZHA - Philips Hue Dimmer Switch v1 -test5
     description: 'Control lights with a Philips Hue Dimmer Switch.
 
 
@@ -53,7 +53,7 @@ action:
           command: '{{ trigger.event.data.command }}'
           cluster_id: '{{ trigger.event.data.cluster_id }}'
           endpoint_id: '{{ trigger.event.data.endpoint_id }}'
-          is_turned_on: '{{ states(light_input) == ''on'' }}'
+          is_turned_on: '{{ states(light_input) }}'
     - choose:
           - conditions:
                 - '{{ command == button_on }}'
