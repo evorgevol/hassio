@@ -34,8 +34,8 @@ blueprint:
 mode: restart
 max_exceeded: silent
 variables:
-  button_on: on
-  button_off: off_with_effect
+  button_on: 'on'
+  button_off: 'off_with_effect'
 trigger:
   - platform: event
     event_type: zha_event
