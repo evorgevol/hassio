@@ -52,7 +52,8 @@ action:
           command: '{{ trigger.event.data.command }}'
           cluster_id: '{{ trigger.event.data.cluster_id }}'
           endpoint_id: '{{ trigger.event.data.endpoint_id }}'
-          is_turned_on: '{{ states(light) == ''on'' }}'
+          to_state: '{{ trigger.to_state }}'
+          is_turned_on: '{{ is_state(trigger.to_state.entity_id, 'on') }}'
     - choose:
           - conditions:
                 - '{{ command == button_on }}'
