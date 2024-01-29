@@ -25,7 +25,6 @@ max_exceeded: silent
 variables:
   light_input: !input light
   input_entity_id: "{{ light_input.entity_id }}"
-  button_device_id: ""
 trigger:
   - platform: event
     event_type: zha_event
@@ -44,56 +43,26 @@ action:
           - "{{ cluster_id == 6 }}"
           - "{{ command == 'on' }}"
         sequence:
-          # check for a second click
-          - wait_for_trigger:
-              - platform: event
-                event_type: zha_event
-                event_data:
-                  device_id: !input shortcut_button
-                  endpoint_id: 1
-                  cluster_id: 6
-                  command: "on"
-            timeout:
-              milliseconds: 600
-            continue_on_timeout: true
           - choose:
-              # if single click
-              - conditions: "{{ not wait.trigger }}"
+              - conditions: "{{ is_turned_on }}"
                 sequence:
-                  - choose:
-                      - conditions: "{{ is_turned_on }}"
-                        sequence:
-                          - service: light.turn_off
-                            target: !input "light"
-                            data:
-                              transition: 1
-                    default:
-                      - service: light.turn_on
-                        target: !input "light"
-                        data:
-                          transition: 1
-            # else double click
+                  - service: light.turn_off
+                    target: !input "light"
+                    data:
+                      transition: 1
             default:
               - service: light.turn_on
                 target: !input "light"
                 data:
                   transition: 1
-                  brightness_pct: 100
-# long click
-# - conditions:
-#     - "{{ endpoint_id == 1 }}"
-#     - "{{ cluster_id == 8 }}"
-#     - "{{ command == 'move_with_on_off' }}"
-#   sequence:
-#     - choose:
-#       default: !input "button_long"
-#     - wait_for_trigger:
-#         - platform: event
-#           event_type: zha_event
-#           event_data:
-#             device_id: !input "shortcut_button"
-#             endpoint_id: 1
-#             cluster_id: 8
-#             command: stop
-#       timeout:
-#         seconds: 10
+      # long click
+      - conditions:
+          - "{{ endpoint_id == 1 }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ command == 'stop_with_on_off' }}"
+        sequence:
+          - service: light.turn_on
+            target: !input light
+            data:
+              brightness_step_pct: -20
+              transition: 1
