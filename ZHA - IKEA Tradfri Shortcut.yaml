@@ -1,5 +1,5 @@
 blueprint:
-    name: ZHA - IKEA Tradfri Shortcut button 2
+    name: ZHA - IKEA Tradfri Shortcut button
     description: Control anything with the ikea shortcut button
     domain: automation
     input:
@@ -27,12 +27,11 @@ blueprint:
                     min: 200
                     max: 5000
                     step: 10
-                    <<: &num-selector-box
-                        unit_of_measurement: milliseconds
-                        mode: box
+                    unit_of_measurement: milliseconds
+                    mode: box
         helper_last_controller_event:
             name: (Required) Helper - Input Text
-            description: Input Text used to store the last event fired by the controller. You will need to manually create a text input entity for this, please read the blueprint Additional Notes for more info.
+            description: Input Text used to store the last event fired by the controller. You will need to manually create a text input entity for this.
             default: ''
             selector:
                 entity:
@@ -46,47 +45,42 @@ variables:
     input_entity_id: '{{ light_input.entity_id }}'
     button_device_id: !input shortcut_button
     helper_last_controller_event: !input helper_last_controller_event
-    last_value: "{{ states(helper_last_controller_event) | default('bob,bob,0,0') | string }}"
-    last_press_device: '{{ last_value.split(",")[0] | string }}'
-    last_press_command: '{{ last_value.split(",")[1] | string }}'
-    last_press_time: '{{ last_value.split(",")[2] | float }}'
-    last_press_count: '{{ last_value.split(",")[3] | int }}'
-    current_time: '{{ as_timestamp(now()) | float }}'
-    click_delta: '{{ current_time - last_press_time }}'
     delay_between_action_repeats: !input delay_between_action_repeats
-    is_repeat: '{{ button_device_id == last_press_device|trim and click_delta <= 0.5 }}'
 trigger:
     - platform: event
       event_type: zha_event
       event_data:
           device_id: !input shortcut_button
+          endpoint_id: 1
 action:
     - variables:
           command: '{{ trigger.event.data.command }}'
-          cluster_id: '{{ trigger.event.data.cluster_id }}'
-          endpoint_id: '{{ trigger.event.data.endpoint_id }}'
           is_turned_on: "{{ is_state(input_entity_id, 'on') }}"
+          last_value: "{{ states(helper_last_controller_event) if states(helper_last_controller_event) != 'unknown' else 'bob,bob,0,0' | string }}"
+          last_press_device: '{{ last_value.split(",")[0] | string }}'
+          last_press_command: '{{ last_value.split(",")[1] | string }}'
+          last_press_time: '{{ last_value.split(",")[2] | float }}'
+          last_press_count: '{{ last_value.split(",")[3] | int }}'
+          current_time: '{{ as_timestamp(now()) | float }}'
+          click_delta: '{{ ((current_time - last_press_time) * 1000) | int }}'
+          is_repeat: '{{ button_device_id == last_press_device|trim and click_delta <= delay_between_action_repeats }}'
     - choose:
           - conditions:
-                - '{{ endpoint_id == 1 }}'
-                - '{{ cluster_id == 6 }}'
                 - "{{ command == 'on' }}"
             sequence:
                 # write to helper
                 - choose:
                       - conditions: '{{ is_repeat }}'
                         sequence:
-                            - &inputtext-update
-                              service: input_text.set_value
+                            - service: input_text.set_value
                               data:
                                   entity_id: !input helper_last_controller_event
-                                  value: '{{ button_device_id,command,now(),last_press_count+1 | string }}'
+                                  value: "{{ [button_device_id,command,current_time,(last_press_count+1)] | join(',') }}"
                   default:
-                      - &inputtext-update
-                        service: input_text.set_value
+                      - service: input_text.set_value
                         data:
                             entity_id: !input helper_last_controller_event
-                            value: '{{ button_device_id,command,now(),1 | string }}'
+                            value: "{{ [button_device_id,command,current_time,1] | join(',') }}"
                 # wait for second click
                 - delay:
                       milliseconds: !input delay_between_action_repeats
@@ -115,8 +109,6 @@ action:
                                   transition: 1
           # long click
           - conditions:
-                - '{{ endpoint_id == 1 }}'
-                - '{{ cluster_id == 8 }}'
                 - "{{ command == 'stop_with_on_off' }}"
             sequence:
                 - service: light.turn_on
