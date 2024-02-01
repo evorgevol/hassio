@@ -1,138 +1,128 @@
 blueprint:
-    name: ZHA - IKEA Tradfri Shortcut button
-    description: Control anything with the ikea shortcut button
-    domain: automation
-    input:
-        shortcut_button:
-            name: Device
-            description: Select an IKEA shortcut button
-            selector:
-                device:
-                    integration: zha
-                    manufacturer: IKEA of Sweden
-                    model: TRADFRI SHORTCUT Button
-        light:
-            name: Light(s)
-            description: The light(s) to control
-            selector:
-                target:
-                    entity:
-                        - domain:
-                              - light
-        delay_between_action_repeats:
-            name: Delay between presses
-            default: 600
-            selector:
-                number:
-                    min: 200
-                    max: 5000
-                    step: 10
-                    unit_of_measurement: milliseconds
-                    mode: box
-        debounce:
-            name: Debounce duration
-            default: 100
-            selector:
-                number:
-                    min: 0
-                    max: 500
-                    step: 10
-                    unit_of_measurement: milliseconds
-                    mode: box
-        helper_last_controller_event:
-            name: (Required) Helper - Input Text
-            description: Input Text used to store the last event fired by the controller. You will need to manually create a text input entity for this.
-            default: ''
-            selector:
-                entity:
-                    filter:
-                        domain: input_text
-    # source_url: https://github.com/evorgevol/hassio/blob/main/ZHA%20-%20IKEA%20Tradfri%20Shortcut.yaml
+  name: ZHA - IKEA Tradfri Shortcut button
+  description: Control anything with the ikea shortcut button
+  domain: automation
+  input:
+    shortcut_button:
+      name: Device
+      description: Select an IKEA shortcut button
+      selector:
+        device:
+          integration: zha
+          manufacturer: IKEA of Sweden
+          model: TRADFRI SHORTCUT Button
+    light:
+      name: Light(s)
+      description: The light(s) to control
+      selector:
+        target:
+          entity:
+            - domain:
+                - light
+    delay_between_action_repeats:
+      name: Delay between presses
+      default: 600
+      selector:
+        number:
+          min: 200
+          max: 5000
+          step: 10
+          unit_of_measurement: milliseconds
+          mode: box
+    debounce:
+      name: Debounce duration
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 500
+          step: 10
+          unit_of_measurement: milliseconds
+          mode: box
+    helper_last_controller_event:
+      name: (Required) Helper - Input Text
+      description: Input Text used to store the last event fired by the controller. You will need to manually create a text input entity for this.
+      default: ""
+      selector:
+        entity:
+          filter:
+            domain: input_text
+  # source_url: https://github.com/evorgevol/hassio/blob/main/ZHA%20-%20IKEA%20Tradfri%20Shortcut.yaml
 mode: restart
 max_exceeded: silent
 variables:
-    light_input: !input light
-    input_entity_id: '{{ light_input.entity_id }}'
-    button_device_id: !input shortcut_button
-    helper_last_controller_event: !input helper_last_controller_event
-    delay_between_action_repeats: !input delay_between_action_repeats
-    debounce: !input debounce
+  button_device_id: !input shortcut_button
+  helper_last_controller_event: !input helper_last_controller_event
+  delay_between_action_repeats: !input delay_between_action_repeats
+  debounce: !input debounce
 trigger:
-    - platform: event
-      event_type: zha_event
-      event_data:
-          device_id: !input shortcut_button
-          endpoint_id: 1
-          command: 'on'
-    - platform: event
-      event_type: zha_event
-      event_data:
-          device_id: !input shortcut_button
-          endpoint_id: 1
-          command: 'stop_with_on_off'
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input shortcut_button
+      endpoint_id: 1
+      command: "on"
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input shortcut_button
+      endpoint_id: 1
+      command: "stop_with_on_off"
 action:
-    - variables:
-          command: '{{ trigger.event.data.command }}'
-          is_turned_on: "{{ is_state(input_entity_id, 'on') }}"
-          last_value: "{{ states(helper_last_controller_event) if states(helper_last_controller_event) != 'unknown' else 'bob,bob,0,0' | string }}"
-          last_press_device: '{{ last_value.split(",")[0] | string }}'
-          last_press_command: '{{ last_value.split(",")[1] | string }}'
-          last_press_time: '{{ last_value.split(",")[2] | float }}'
-          last_press_count: '{{ last_value.split(",")[3] | int }}'
-          current_time: '{{ as_timestamp(now()) | float }}'
-          click_delta: '{{ ((current_time - last_press_time) * 1000) | int }}'
-          is_repeat: '{{ button_device_id == last_press_device|trim and click_delta <= delay_between_action_repeats }}'
-    - delay:
-          milliseconds: '{{ debounce }}'
-    - choose:
-          - conditions:
-                - "{{ command == 'on' }}"
-            sequence:
-                # write to helper
-                - choose:
-                      - conditions: '{{ is_repeat }}'
-                        sequence:
-                            - service: input_text.set_value
-                              data:
-                                  entity_id: !input helper_last_controller_event
-                                  value: "{{ [button_device_id,command,current_time,(last_press_count+1)] | join(',') }}"
-                  default:
-                      - service: input_text.set_value
-                        data:
-                            entity_id: !input helper_last_controller_event
-                            value: "{{ [button_device_id,command,current_time,1] | join(',') }}"
-                # wait for second click
-                - delay:
-                      milliseconds: '{{ delay_between_action_repeats - debounce }}'
-                - choose:
-                      - conditions: '{{ is_repeat }}'
-                        # double press
-                        sequence:
-                            - service: light.turn_on
-                              target: !input 'light'
-                              data:
-                                  transition: 1
-                                  brightness_pct: 100
-                  # single press - toggle on/off
-                  default:
-                      - choose:
-                            - conditions: '{{ is_turned_on }}'
-                              sequence:
-                                  - service: light.turn_off
-                                    target: !input 'light'
-                                    data:
-                                        transition: 1
-                        default:
-                            - service: light.turn_on
-                              target: !input 'light'
-                              data:
-                                  transition: 1
-          # long click
-          - conditions:
-                - "{{ command == 'stop_with_on_off' }}"
-            sequence:
-                - service: light.turn_on
-                  target: !input light
-                  data:
-                      brightness_step_pct: -10
+  - variables:
+      command: "{{ trigger.event.data.command }}"
+  - delay:
+      milliseconds: "{{ debounce }}"
+  - choose:
+      - conditions:
+          - "{{ command == 'on' }}"
+        sequence:
+          # write to helper
+          - variables:
+              last_value: "{{ states(helper_last_controller_event) if states(helper_last_controller_event) != 'unknown' else 'bob,bob,0,0' | string }}"
+              last_press_device: '{{ last_value.split(",")[0] | string }}'
+              last_press_command: '{{ last_value.split(",")[1] | string }}'
+              last_press_time: '{{ last_value.split(",")[2] | float }}'
+              last_press_count: '{{ last_value.split(",")[3] | int }}'
+              current_time: "{{ as_timestamp(now()) | float }}"
+              click_delta: "{{ ((current_time - last_press_time) * 1000) | int }}"
+              is_repeat: "{{ button_device_id == last_press_device|trim and click_delta <= delay_between_action_repeats }}"
+          - choose:
+              - conditions: "{{ is_repeat }}"
+                sequence:
+                  - service: input_text.set_value
+                    data:
+                      entity_id: !input helper_last_controller_event
+                      value: "{{ [button_device_id,command,current_time,(last_press_count+1)] | join(',') }}"
+            default:
+              - service: input_text.set_value
+                data:
+                  entity_id: !input helper_last_controller_event
+                  value: "{{ [button_device_id,command,current_time,1] | join(',') }}"
+          # wait for second click
+          - delay:
+              milliseconds: "{{ delay_between_action_repeats - debounce }}"
+          - choose:
+              - conditions: "{{ is_repeat }}"
+                # double press
+                sequence:
+                  - service: light.turn_on
+                    target: !input "light"
+                    data:
                       transition: 1
+                      brightness_pct: 100
+            # single press - toggle on/off
+            default:
+              - service: light.toggle
+                target: !input "light"
+                data:
+                  transition: 0.5
+      # long click
+      - conditions:
+          - "{{ command == 'stop_with_on_off' }}"
+        sequence:
+          - service: light.turn_on
+            target: !input light
+            data:
+              brightness_step_pct: -10
+              transition: 0.5
