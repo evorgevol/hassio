@@ -29,6 +29,16 @@ blueprint:
                     step: 10
                     unit_of_measurement: milliseconds
                     mode: box
+        debounce:
+            name: Debounce duration
+            default: 100
+            selector:
+                number:
+                    min: 0
+                    max: 500
+                    step: 10
+                    unit_of_measurement: milliseconds
+                    mode: box
         helper_last_controller_event:
             name: (Required) Helper - Input Text
             description: Input Text used to store the last event fired by the controller. You will need to manually create a text input entity for this.
@@ -46,12 +56,20 @@ variables:
     button_device_id: !input shortcut_button
     helper_last_controller_event: !input helper_last_controller_event
     delay_between_action_repeats: !input delay_between_action_repeats
+    debounce: !input debounce
 trigger:
     - platform: event
       event_type: zha_event
       event_data:
           device_id: !input shortcut_button
           endpoint_id: 1
+          command: 'on'
+    - platform: event
+      event_type: zha_event
+      event_data:
+          device_id: !input shortcut_button
+          endpoint_id: 1
+          command: 'stop_with_on_off'
 action:
     - variables:
           command: '{{ trigger.event.data.command }}'
@@ -64,6 +82,8 @@ action:
           current_time: '{{ as_timestamp(now()) | float }}'
           click_delta: '{{ ((current_time - last_press_time) * 1000) | int }}'
           is_repeat: '{{ button_device_id == last_press_device|trim and click_delta <= delay_between_action_repeats }}'
+    - delay:
+          milliseconds: '{{ debounce }}'
     - choose:
           - conditions:
                 - "{{ command == 'on' }}"
@@ -83,7 +103,7 @@ action:
                             value: "{{ [button_device_id,command,current_time,1] | join(',') }}"
                 # wait for second click
                 - delay:
-                      milliseconds: !input delay_between_action_repeats
+                      milliseconds: '{{ delay_between_action_repeats - debounce }}'
                 - choose:
                       - conditions: '{{ is_repeat }}'
                         # double press
