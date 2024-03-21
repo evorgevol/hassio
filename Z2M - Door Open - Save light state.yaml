@@ -1,153 +1,161 @@
 blueprint:
-  name: Controller - Binary sensor change light and put it back in previous state
-  description: "When a door is opened, change an entity to a particular state, and remember the previous state. On door close, revert back to previous state"
-  # source_url: https://github.com/EPMatt/awesome-ha-blueprints/blob/main/blueprints/controllers/ikea_e1812/ikea_e1812.yaml
-  domain: automation
-  input:
-    controller_entity:
-      name: (Zigbee2MQTT) Controller Entity
-      description:
-        The action sensor of the controller to use for the automation.
-        Choose a value only if the remote is integrated with Zigbee2MQTT.
-      default: ""
-      selector:
-        entity:
-          domain:
-            - sensor
-          multiple: false
-    light:
-      name: Light(s)
-      description: The light(s) to control
-      selector:
-        target:
-        entity:
-          - domain:
-              - light
-    helper_last_light_state:
-      name: (Required) Helper - Last Light State
-      description:
-        Input Text used to store the last event fired by the controller.
-        You will need to manually create a text input entity for this, please read
-        the blueprint Additional Notes for more info.
-      default: ""
-      selector:
-        entity:
-          domain:
-            - input_text
-          multiple: false
-    helper_on_delay:
-      name: (Optional) Helper - Delay in taking previous state
-      description: Delay between turning on the light and recording the previous state of the light.
-      default: 500
-      selector:
-        number:
-          min: 100.0
-          max: 5000.0
-          unit_of_measurement: milliseconds
-          mode: box
-          step: 10.0
-    helper_debounce_delay:
-      name: (Optional) Helper - Debounce delay
-      description:
-        Delay used for debouncing RAW controller events, by default set
-        to 0. A value of 0 disables the debouncing feature. Increase this value if
-        you notice custom actions or linked Hooks running multiple times when interacting
-        with the device. When the controller needs to be debounced, usually a value
-        of 100 is enough to remove all duplicate events.
-      default: 0
-      selector:
-        number:
-          min: 0.0
-          max: 1000.0
-          unit_of_measurement: milliseconds
-          mode: box
-          step: 10.0
+    name: Controller - Binary sensor change light and put it back in previous state
+    description: 'When a door is opened, change an entity to a particular state, and remember the previous state. On door close, revert back to previous state'
+    # source_url: https://github.com/EPMatt/awesome-ha-blueprints/blob/main/blueprints/controllers/ikea_e1812/ikea_e1812.yaml
+    domain: automation
+    input:
+        controller_entity:
+            name: (Zigbee2MQTT) Controller Entity bob
+            description: The action sensor of the controller to use for the automation.
+                Choose a value only if the remote is integrated with Zigbee2MQTT.
+            default: ''
+            selector:
+                entity:
+                    domain:
+                        - binary_sensor
+                    multiple: false
+        light:
+            name: Light(s)
+            description: The light(s) to control
+            selector:
+                target:
+                    entity:
+                        - domain:
+                              - light
+        action_door_open:
+            name: (Optional) Action to run when door opens
+            description: Action to run when door opens
+            default: []
+            selector:
+                action: {}
+        helper_last_light_state:
+            name: (Required) Helper - Last Light State
+            description: Input Text used to store the last event fired by the controller.
+                You will need to manually create a text input entity for this, please read
+                the blueprint Additional Notes for more info.
+            default: ''
+            selector:
+                entity:
+                    domain:
+                        - input_text
+                    multiple: false
+        helper_on_delay:
+            name: (Optional) Helper - Delay in taking previous state
+            description: Delay between turning on the light and recording the previous state of the light.
+            default: 500
+            selector:
+                number:
+                    min: 100.0
+                    max: 5000.0
+                    unit_of_measurement: milliseconds
+                    mode: box
+                    step: 10.0
+        helper_debounce_delay:
+            name: (Optional) Helper - Debounce delay
+            description: Delay used for debouncing RAW controller events, by default set
+                to 0. A value of 0 disables the debouncing feature. Increase this value if
+                you notice custom actions or linked Hooks running multiple times when interacting
+                with the device. When the controller needs to be debounced, usually a value
+                of 100 is enough to remove all duplicate events.
+            default: 0
+            selector:
+                number:
+                    min: 0.0
+                    max: 1000.0
+                    unit_of_measurement: milliseconds
+                    mode: box
+                    step: 10.0
 variables:
-  light: !input light
-  helper_last_light_state: !input helper_last_light_state
-  helper_on_delay: !input helper_on_delay
-  helper_debounce_delay: !input helper_debounce_delay
-  door_open: 'on'
-  door_close: 'off'
-  controller_entity: !input controller_entity
-  controller_id: controller_entity
+    light: !input light
+    helper_last_light_state: !input helper_last_light_state
+    helper_on_delay: !input helper_on_delay
+    helper_debounce_delay: !input helper_debounce_delay
+    door_open: 'on'
+    door_close: 'off'
+    controller_entity: !input controller_entity
+    controller_id: controller_entity
 mode: restart
 max_exceeded: silent
 trigger:
-  - platform: event
-    event_type: state_changed
-    event_data:
-      entity_id: !input controller_entity
+    - platform: event
+      event_type: state_changed
+      event_data:
+          entity_id: !input controller_entity
 condition:
-  - condition: and
-    conditions:
-      - '{{ trigger.event.data.new_state.state not in ["","None"] }}'
-      - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
+    - condition: and
+      conditions:
+          - '{{ trigger.event.data.new_state.state not in ["","None"] }}'
+          - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
 action:
-  - delay:
-      milliseconds: !input helper_debounce_delay
-  - variables:
-      trigger_action: '{{ trigger.event.data.new_state.state }}'
-      light_state: '{{ light.state }}'
-      last_value: "{{ states(helper_last_light_state) if states(helper_last_light_state) != 'unknown' else 'bob,bob,0,0' | string }}"
-      last_device: '{{ last_value.split(",")[0] | string }}'
-      last_value_onoff: '{{ last_value.split(",")[1] | string }}'
-  - choose:
-      - conditions: "{{ trigger_action | string in door_open }}"
-        sequence:
-          - event: evo_controller_event
-            event_data:
-              controller: "{{ controller_id }}"
-              action: door_open
-          - choose:
-              - conditions: "{{ light_state | string in 'off' }}"
-                # turn light on, wait, store value, action door open
-                sequence:
-                  - service: light.turn_on
-                      target: !input 'light'
-                  - delay:
-                      milliseconds: !input helper_on_delay
-                  - service: input_text.set_value
-                    data:
-                      entity_id: !input helper_last_light_state
-                      value: "{{ [controller_entity,'off',current_time] | join(',') }}"
-                  - service: scene.create
-                    data:
-                      scene_id: evo_dooropen_before
-                      snapshot_entities:
-                      - !input light
-                  - choose:
-                      - conditions: []
-                        sequence: !input action_door_open
-              - conditions: "{{ light_state | string in 'on' }}"
-                # store value, action door open
-                sequence:
-                  - service: input_text.set_value
-                    data:
-                      entity_id: !input helper_last_light_state
-                      value: "{{ [controller_entity,'on',current_time] | join(',') }}"
-                  - service: scene.create
-                    data:
-                      scene_id: evo_dooropen_before
-                      snapshot_entities:
-                      - !input light
-                  
-                  - choose:
-                      - conditions: []
-                        sequence: !input action_door_open
-      - conditions: "{{ controller_entity == last_device|trim and trigger_action | string in door_close }}"
-        sequence:
-          - event: evo_controller_event
-            event_data:
-              controller: "{{ controller_id }}"
-              action: door_close
-          - service: scene.turn_on
-            target:
-              entity_id: scene.front_light_before_siren_script
-          - choose:
-              - conditions: "{{ last_value_onoff == 'off' }}"
-                sequence:
-                  - delay:
-                      milliseconds: !input helper_on_delay
-                  - service: light.turn_off
-                      target: !input 'light'
+    - delay:
+          milliseconds: !input helper_debounce_delay
+    - variables:
+          trigger_action: '{{ trigger.event.data.new_state.state }}'
+          light_state: '{{ states(light.entity_id) | string }}'
+          last_value: "{{ states(helper_last_light_state) if states(helper_last_light_state) != 'unknown' else 'bob,bob,0,0' | string }}"
+          last_device: '{{ last_value.split(",")[0] | string }}'
+          last_value_onoff: '{{ last_value.split(",")[1] | string }}'
+    - choose:
+          - conditions: '{{ trigger_action | string in door_open }}'
+            sequence:
+                - choose:
+                      - conditions: "{{ light_state | string in 'off' }}"
+                        # turn light on, wait, store value, action door open
+                        sequence:
+                            - event: evo_controller_event
+                              event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: turn on
+                            - service: light.turn_on
+                              target: !input 'light'
+                            - delay:
+                                  milliseconds: !input helper_on_delay
+                            - service: input_text.set_value
+                              data:
+                                  entity_id: !input helper_last_light_state
+                                  value: "{{ [controller_entity,'off',current_time] | join(',') }}"
+                            - event: evo_controller_event
+                              event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: save scene
+                            - service: scene.create
+                              data:
+                                  scene_id: evo_dooropen_before
+                                  snapshot_entities: '{{ light.entity_id }}'
+                            - event: evo_controller_event
+                              event_data:
+                                  controller: '{{ controller_id }}'
+                                  action: perform action
+                            - choose:
+                                  - conditions: []
+                                    sequence: !input action_door_open
+                      - conditions: "{{ light_state | string in 'on' }}"
+                        # store value, action door open
+                        sequence:
+                            - service: input_text.set_value
+                              data:
+                                  entity_id: !input helper_last_light_state
+                                  value: "{{ [controller_entity,'on',current_time] | join(',') }}"
+                            - service: scene.create
+                              data:
+                                  scene_id: evo_dooropen_before
+                                  snapshot_entities: '{{ light.entity_id }}'
+                            - choose:
+                                  - conditions: []
+                                    sequence: !input action_door_open
+          - conditions: '{{ controller_entity == last_device|trim and trigger_action | string in door_close }}'
+            sequence:
+                - event: evo_controller_event
+                  event_data:
+                      controller: '{{ controller_id }}'
+                      action: door_close
+                - service: scene.turn_on
+                  target:
+                      entity_id: scene.evo_dooropen_before
+                - choose:
+                      - conditions: "{{ last_value_onoff == 'off' }}"
+                        sequence:
+                            - delay:
+                                  milliseconds: !input helper_on_delay
+                            - service: light.turn_off
+                              target: !input 'light'
