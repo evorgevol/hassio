@@ -1,0 +1,53 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+    themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Added By Homeway to enable Alexa support.
+alexa:
+    smart_home:
+
+# Added By Homeway to enable Google Assistant support.
+google_assistant:
+    project_id: homewayio
+    service_account:
+        private_key: 'nokey'
+        client_email: 'support@homeway.io'
+    expose_by_default: false
+    entity_config:
+        light.bed:
+            name: Bedroom Lights
+            expose: true
+        fan.bedroom_purifier:
+            name: Purifier
+            expose: true
+        climate.evelyn_hvac_climate_system:
+            name: Evelyn Climate
+            expose: true
+        switch.kettle_start:
+            name: Kettle
+            expose: true
+        light.lamps:
+            name: Lamps
+            expose: true
+        cover.bedroom_left_blind_curtain:
+            name: Left Blind
+            expose: true
+        light.living_room_ceiling:
+            name: Ceiling Lights
+            expose: true
+        light.living_room_lights:
+            name: Living Room Lights
+            expose: true
+        scene.movie:
+            expose: true
+        light.office_lights:
+            expose: true
+        light.outdoor_lights:
+            expose: true
