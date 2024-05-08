@@ -1,7 +1,7 @@
 blueprint:
     name: Controller - Binary sensor change light and put it back in previous state
     description: 'When a door is opened, change an entity to a particular state, and remember the previous state. On door close, revert back to previous state'
-    # source_url: https://github.com/EPMatt/awesome-ha-blueprints/blob/main/blueprints/controllers/ikea_e1812/ikea_e1812.yaml
+    source_url: https://github.com/evorgevol/hassio/blob/main/Z2M%20-%20Door%20Open%20-%20Save%20light%20state.yaml
     domain: automation
     input:
         controller_entity:
