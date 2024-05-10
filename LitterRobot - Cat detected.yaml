@@ -1,0 +1,61 @@
+blueprint:
+  name: Litter Robot - Cat Detected
+  description: Do something to something
+  domain: automation
+  author: evorgevol
+  input:
+    litter_robot:
+      name: Litter Robot Sensor Status Code
+      selector:
+        entity:
+          filter:
+            domain: sensor
+    action_motion:
+      name: (Optional) Action to run when motion detected
+      description: Action to run when motion detected
+      default: []
+      selector:
+        action: {}
+    no_motion_wait:
+      name: Wait time
+      description: Time to leave the light on after last motion is detected.
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+
+mode: restart
+max_exceeded: silent
+variables:
+  action_entities: !input action_motion
+  action_target: '{{ action_entities[0].target.entity_id }}'
+
+trigger:
+  platform: state
+  entity_id: !input litter_robot
+  from: 'rdy'
+  to: 'cst'
+
+action:
+  - alias: 'Store previous state'
+    service: scene.create
+    data:
+      scene_id: evo_motion_active
+      snapshot_entities: '{{ action_target }}'
+  - choose:
+      - conditions: []
+        sequence: !input action_motion
+  - alias: 'Wait until there is no motion from device'
+    wait_for_trigger:
+      platform: state
+      entity_id: !input litter_robot
+      from: 'on'
+      to: 'off'
+  - alias: 'Wait the number of seconds that has been set'
+    delay: !input no_motion_wait
+  - alias: 'Restore state'
+    service: scene.turn_on
+    target:
+      entity_id: scene.evo_motion_active
