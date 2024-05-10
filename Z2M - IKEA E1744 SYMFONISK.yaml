@@ -1,0 +1,69 @@
+blueprint:
+  name: Controller - SYMFONISK
+  description: 'Controller - IKEA E1744 SYMFONISK Rotary Remote\n\nController automation for executing any kind of action triggered by the provided IKEA E1744 SYMFONISK Rotary Remote'
+  domain: automation
+  input:
+    controller_entity:
+      name: (Zigbee2MQTT) Controller Entity
+      description: The action switch of the controller to use for the automation
+      default: ''
+      selector:
+        entity:
+          domain:
+            - sensor
+          multiple: false
+    action_click:
+      name: (Optional) Action to run when button pressed
+      description: Action to run when button pressed
+      default: []
+      selector:
+        action: {}
+    action_rotate_clockwise:
+      name: (Optional) Action to run when rotated clockwise
+      description: Action to run when rotated clockwise
+      default: []
+      selector:
+        action: {}
+    action_rotate_anticlockwise:
+      name: (Optional) Action to run when rotated anti-clockwise
+      description: Action to run when rotated anti-clockwise
+      default: []
+      selector:
+        action: {}
+variables:
+  trigger_action: '{{ trigger.event.data.new_state.state }}'
+  action_entities: !input action_click
+  controller_entity: !input controller_entity
+mode: restart
+max_exceeded: silent
+trigger:
+  - platform: event
+    event_type: state_changed
+    event_data:
+      entity_id: !input controller_entity
+condition:
+  - condition: and
+    conditions:
+      - '{{ trigger.event.data.new_state.state not in ["","None"] }}'
+      - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
+action:
+  - event: evo_controller_event
+    event_data:
+      controller: '{{ controller_entity }}'
+      action: '{{ trigger_action }}'
+  - choose:
+      - conditions: "{{ trigger_action == 'toggle' }}"
+        sequence:
+          - choose:
+              - conditions: []
+                sequence: !input action_click
+      - conditions: "{{ trigger_action == 'brightness_move_down' }}"
+        sequence:
+          - choose:
+              - conditions: []
+                sequence: !input action_rotate_anticlockwise
+      - conditions: "{{ trigger_action == 'brightness_move_up' }}"
+        sequence:
+          - choose:
+              - conditions: []
+                sequence: !input action_rotate_clockwise
