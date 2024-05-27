@@ -1,97 +1,81 @@
 blueprint:
-    name: Controller - Binary sensor change light and put it back in previous state
-    description: 'When a door is opened, change an entity to a particular state, and remember the previous state. On door close, revert back to previous state'
-    source_url: https://github.com/evorgevol/hassio/blob/main/Z2M%20-%20Door%20Open%20-%20Save%20light%20state.yaml
-    domain: automation
-    input:
-        controller_entity:
-            name: (Zigbee2MQTT) Controller Entity
-            description: The action sensor of the controller to use for the automation.
-                Choose a value only if the remote is integrated with Zigbee2MQTT.
-            default: ''
-            selector:
-                entity:
-                    domain:
-                        - binary_sensor
-                    multiple: false
-        action_door_open:
-            name: (Optional) Action to run when door opens
-            description: Action to run when door opens
-            default: []
-            selector:
-                action: {}
-        helper_on_delay:
-            name: (Optional) Helper - Delay in taking previous state
-            description: Delay between turning on the light and recording the previous state of the light.
-            default: 500
-            selector:
-                number:
-                    min: 100.0
-                    max: 5000.0
-                    unit_of_measurement: milliseconds
-                    mode: box
-                    step: 10.0
+  name: Controller - Binary sensor change light and put it back in previous state
+  description: 'When a door is opened, change an entity to a particular state, and remember the previous state. On door close, revert back to previous state'
+  source_url: https://github.com/evorgevol/hassio/blob/main/Z2M%20-%20Door%20Open%20-%20Save%20light%20state.yaml
+  domain: automation
+  input:
+    controller_entity:
+      name: (Zigbee2MQTT) Controller Entity
+      description: The action sensor of the controller to use for the automation.
+        Choose a value only if the remote is integrated with Zigbee2MQTT.
+      default: ''
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+          multiple: false
+    action_door_open:
+      name: (Optional) Action to run when door opens
+      description: Action to run when door opens
+      default: []
+      selector:
+        action: {}
+    helper_on_delay:
+      name: (Optional) Helper - Delay in taking previous state
+      description: Delay between turning on the light and recording the previous state of the light.
+      default: 200
+      selector:
+        number:
+          min: 100.0
+          max: 5000.0
+          unit_of_measurement: milliseconds
+          mode: box
+          step: 10.0
 variables:
-    trigger_action: '{{ trigger.event.data.new_state.state }}'
-    helper_on_delay: !input helper_on_delay
-    action_entities: !input action_door_open
-    controller_entity: !input controller_entity
-    action_target: '{{ action_entities[0].target.entity_id }}'
+  trigger_action: '{{ trigger.event.data.new_state.state }}'
+  helper_on_delay: !input helper_on_delay
+  action_entities: !input action_door_open
+  controller_entity: !input controller_entity
+  action_target: '{{ action_entities[0].target.entity_id }}'
 mode: restart
 max_exceeded: silent
 trigger:
-    - platform: event
-      event_type: state_changed
-      event_data:
-          entity_id: !input controller_entity
+  - platform: event
+    event_type: state_changed
+    event_data:
+      entity_id: !input controller_entity
 condition:
-    - condition: and
-      conditions:
-          - '{{ trigger.event.data.new_state.state not in ["","None"] }}'
-          - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
+  - condition: and
+    conditions:
+      - '{{ trigger.event.data.new_state.state not in ["","None"] }}'
+      - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
 action:
-    - choose:
-          - conditions: "{{ trigger_action == 'on' }}"
-            sequence:
-                - service: scene.create
-                  data:
-                      scene_id: evo_dooropen_before_pre
-                      snapshot_entities: '{{ action_target }}'
-                - event: evo_controller_event
-                  event_data:
-                      controller: '{{ controller_entity }}'
-                      action: turn on
-                - service: light.turn_on
-                  target:
-                      entity_id: '{{ action_target }}'
-                - delay:
-                      milliseconds: !input helper_on_delay
-                - event: evo_controller_event
-                  event_data:
-                      controller: '{{ controller_entity }}'
-                      action: save scene 2
-                - service: scene.create
-                  data:
-                      scene_id: evo_dooropen_before
-                      snapshot_entities: '{{ action_target }}'
-                - event: evo_controller_event
-                  event_data:
-                      controller: '{{ controller_entity }}'
-                      action: perform action
-                - choose:
-                      - conditions: []
-                        sequence: !input action_door_open
-          - conditions: "{{ trigger_action == 'off' }}"
-            sequence:
-                - event: evo_controller_event
-                  event_data:
-                      controller: '{{ controller_entity }}'
-                      action: door_close
-                - service: scene.turn_on
-                  target:
-                      entity_id: scene.evo_dooropen_before
-                - delay:
-                      milliseconds: !input helper_on_delay
-                - service: scene.turn_on
-                  target:
-                      entity_id: scene.evo_dooropen_before_pre
+  - choose:
+      - conditions: "{{ trigger_action == 'on' }}"
+        sequence:
+          - service: scene.create
+            data:
+              scene_id: evo_dooropen_before_pre
+              snapshot_entities: '{{ action_target }}'
+          - service: light.turn_on
+            target:
+              entity_id: '{{ action_target }}'
+          - delay:
+              milliseconds: !input helper_on_delay
+          - service: scene.create
+            data:
+              scene_id: evo_dooropen_before
+              snapshot_entities: '{{ action_target }}'
+          - choose:
+              - conditions: []
+                sequence: !input action_door_open
+      - conditions: "{{ trigger_action == 'off' }}"
+        sequence:
+          - service: scene.turn_on
+            target:
+              entity_id: scene.evo_dooropen_before
+          - delay:
+              milliseconds: !input helper_on_delay
+          - service: scene.turn_on
+            target:
+              entity_id: scene.evo_dooropen_before_pre
