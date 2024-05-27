@@ -35,18 +35,13 @@ variables:
   trigger_action: '{{ trigger.event.data.new_state.state }}'
   action_entities: !input action_click
   controller_entity: !input controller_entity
-mode: restart
+mode: queued
 max_exceeded: silent
 trigger:
   - platform: event
     event_type: state_changed
     event_data:
       entity_id: !input controller_entity
-condition:
-  - condition: and
-    conditions:
-      - '{{ trigger.event.data.new_state.state not in ["","None"] }}'
-      - '{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}'
 action:
   - event: evo_controller_event
     event_data:
