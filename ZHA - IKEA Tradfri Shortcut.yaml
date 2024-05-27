@@ -1,6 +1,7 @@
 blueprint:
   name: ZHA - IKEA Tradfri Shortcut button
   description: Control anything with the ikea shortcut button
+  source_url: https://github.com/evorgevol/hassio/blob/main/ZHA%20-%20IKEA%20Tradfri%20Shortcut.yaml
   domain: automation
   input:
     shortcut_button:
@@ -42,7 +43,7 @@ blueprint:
     helper_last_controller_event:
       name: (Required) Helper - Input Text
       description: Input Text used to store the last event fired by the controller. You will need to manually create a text input entity for this.
-      default: ""
+      default: ''
       selector:
         entity:
           filter:
@@ -61,18 +62,18 @@ trigger:
     event_data:
       device_id: !input shortcut_button
       endpoint_id: 1
-      command: "on"
+      command: 'on'
   - platform: event
     event_type: zha_event
     event_data:
       device_id: !input shortcut_button
       endpoint_id: 1
-      command: "stop_with_on_off"
+      command: 'stop_with_on_off'
 action:
   - variables:
-      command: "{{ trigger.event.data.command }}"
+      command: '{{ trigger.event.data.command }}'
   - delay:
-      milliseconds: "{{ debounce }}"
+      milliseconds: '{{ debounce }}'
   - choose:
       - conditions:
           - "{{ command == 'on' }}"
@@ -84,11 +85,11 @@ action:
               last_press_command: '{{ last_value.split(",")[1] | string }}'
               last_press_time: '{{ last_value.split(",")[2] | float }}'
               last_press_count: '{{ last_value.split(",")[3] | int }}'
-              current_time: "{{ as_timestamp(now()) | float }}"
-              click_delta: "{{ ((current_time - last_press_time) * 1000) | int }}"
-              is_repeat: "{{ button_device_id == last_press_device|trim and click_delta <= delay_between_action_repeats }}"
+              current_time: '{{ as_timestamp(now()) | float }}'
+              click_delta: '{{ ((current_time - last_press_time) * 1000) | int }}'
+              is_repeat: '{{ button_device_id == last_press_device|trim and click_delta <= delay_between_action_repeats }}'
           - choose:
-              - conditions: "{{ is_repeat }}"
+              - conditions: '{{ is_repeat }}'
                 sequence:
                   - service: input_text.set_value
                     data:
@@ -101,20 +102,20 @@ action:
                   value: "{{ [button_device_id,command,current_time,1] | join(',') }}"
           # wait for second click
           - delay:
-              milliseconds: "{{ delay_between_action_repeats - debounce }}"
+              milliseconds: '{{ delay_between_action_repeats - debounce }}'
           - choose:
-              - conditions: "{{ is_repeat }}"
+              - conditions: '{{ is_repeat }}'
                 # double press
                 sequence:
                   - service: light.turn_on
-                    target: !input "light"
+                    target: !input 'light'
                     data:
                       transition: 1
                       brightness_pct: 100
             # single press - toggle on/off
             default:
               - service: light.toggle
-                target: !input "light"
+                target: !input 'light'
                 data:
                   transition: 0.5
       # long click

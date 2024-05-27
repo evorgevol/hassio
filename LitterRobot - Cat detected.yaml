@@ -1,6 +1,7 @@
 blueprint:
   name: Litter Robot - Cat Detected
   description: Do something to something
+  source_url: https://github.com/evorgevol/hassio/blob/main/LitterRobot%20-%20Cat%20detected.yaml
   domain: automation
   author: evorgevol
   input:

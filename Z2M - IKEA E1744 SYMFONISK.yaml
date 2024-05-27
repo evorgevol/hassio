@@ -1,6 +1,7 @@
 blueprint:
   name: Controller - SYMFONISK
   description: 'Controller - IKEA E1744 SYMFONISK Rotary Remote\n\nController automation for executing any kind of action triggered by the provided IKEA E1744 SYMFONISK Rotary Remote'
+  source_url: https://github.com/evorgevol/hassio/blob/main/Z2M%20-%20IKEA%20E1744%20SYMFONISK.yaml
   domain: automation
   input:
     controller_entity:
