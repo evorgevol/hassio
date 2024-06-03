@@ -17,6 +17,11 @@ blueprint:
       default: []
       selector:
         action: {}
+    scene_name:
+      name: Scene name
+      description: The name of the scene to use for storing the previous state
+      selector:
+        text:
     no_motion_wait:
       name: Wait time
       description: Time to leave the light on after last motion is detected.
@@ -26,37 +31,41 @@ blueprint:
           min: 0
           max: 3600
           unit_of_measurement: seconds
-
 mode: restart
 max_exceeded: silent
 variables:
   action_entities: !input action_motion
-  action_target: '{{ action_entities[0].target.entity_id }}'
-
+  action_target: "{{ action_entities[0].target.entity_id }}"
+  scene_name: !input scene_name
+  no_motion_wait: !input no_motion_wait
+  already_triggered: "{{ now() - this.attributes.last_triggered < timedelta(seconds=no_motion_wait) }}"
 trigger:
   platform: state
   entity_id: !input litter_robot
-  from: 'rdy'
-  to: 'cst'
+  from: "rdy"
+  to: "cst"
 
 action:
-  - alias: 'Store previous state'
-    service: scene.create
-    data:
-      scene_id: evo_motion_active
-      snapshot_entities: '{{ action_target }}'
+  - choose:
+      - conditions: "{{ !already_triggered }}"
+        sequence:
+          - alias: "Store previous state"
+            service: scene.create
+            data:
+              scene_id: "{{ scene_name }}"
+              snapshot_entities: "{{ action_target }}"
   - choose:
       - conditions: []
         sequence: !input action_motion
-  - alias: 'Wait until there is no motion from device'
+  - alias: "Wait until there is no motion from device"
     wait_for_trigger:
       platform: state
       entity_id: !input litter_robot
-      from: 'on'
-      to: 'off'
-  - alias: 'Wait the number of seconds that has been set'
+      from: "on"
+      to: "off"
+  - alias: "Wait the number of seconds that has been set"
     delay: !input no_motion_wait
-  - alias: 'Restore state'
+  - alias: "Restore state"
     service: scene.turn_on
     target:
-      entity_id: scene.evo_motion_active
+      entity_id: "{{ 'scene.' + scene_name }}"
