@@ -79,3 +79,13 @@ action:
           - service: scene.turn_on
             target:
               entity_id: scene.evo_dooropen_before_pre
+          - action: scene.delete
+            metadata: {}
+            data: {}
+            target:
+              entity_id: scene.evo_dooropen_before
+          - action: scene.delete
+            metadata: {}
+            data: {}
+            target:
+              entity_id: scene.evo_dooropen_before_pre
