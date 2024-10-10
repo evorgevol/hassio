@@ -53,16 +53,16 @@ action:
   - choose:
       - conditions: "{{ trigger_action == 'on' }}"
         sequence:
-          - service: scene.create
+          - action: scene.create
             data:
               scene_id: evo_dooropen_before_pre
               snapshot_entities: '{{ action_target }}'
-          - service: light.turn_on
+          - action: light.turn_on
             target:
               entity_id: '{{ action_target }}'
           - delay:
               milliseconds: !input helper_on_delay
-          - service: scene.create
+          - action: scene.create
             data:
               scene_id: evo_dooropen_before
               snapshot_entities: '{{ action_target }}'
@@ -71,12 +71,12 @@ action:
                 sequence: !input action_door_open
       - conditions: "{{ trigger_action == 'off' }}"
         sequence:
-          - service: scene.turn_on
+          - action: scene.turn_on
             target:
               entity_id: scene.evo_dooropen_before
           - delay:
               milliseconds: !input helper_on_delay
-          - service: scene.turn_on
+          - action: scene.turn_on
             target:
               entity_id: scene.evo_dooropen_before_pre
           - action: scene.delete
